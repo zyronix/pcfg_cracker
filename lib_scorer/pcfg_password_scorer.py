@@ -12,7 +12,6 @@ Note: This class is based heavily on /lib_trainer/pcfg_password_parser
 
 """
 
-
 from collections import Counter
 
 # Local imports
@@ -34,7 +33,7 @@ class PCFGPasswordScorer:
     Responsible for holding the Grammar and evaluating inputs against it
     """
 
-    def __init__(self, limit = 0):
+    def __init__(self, limit=0):
         """
         Initializes the class and all the data structures
 
@@ -94,7 +93,7 @@ class PCFGPasswordScorer:
         # Create the multi-word detector. Since we'll be training it on base words
         # that have already been extracted, can set the threshold to 1 and only
         # parse words we want to be part of a multiword
-        self.multiword_detector = MultiWordDetector(threshold = 1, min_len = min_len)
+        self.multiword_detector = MultiWordDetector(threshold=1, min_len=min_len)
 
         # Go through all of the alpha strings to register them as potential multi-word values
         for key, value in self.count_alpha.items():
@@ -205,38 +204,32 @@ class PCFGPasswordScorer:
         # Start out at 100% probability
         cur_prob = 1.0
 
-        # Note, for the Python counters if a key is not found, it returns a
-        # '0' vs a KeyError exception. Since a probability of 0 is what we
-        # are looking for if that happens, that's perfect. This can still
-        # throw KeyError exceptions though for the length indexed counters if
-        # no item at that length is found. Therefore we still need to catch
-        # KeyErrors
-        try:
-            for item in found_walks:
-                cur_prob *= self.count_keyboard[len(item)][item]
+        # I
 
-            for item in found_years:
-                cur_prob *= self.count_years[item]
+        for item in found_walks:
+            cur_prob *= get_probability(item, self.count_keyboard)
 
-            for item in found_context_sensitive_strings:
-                cur_prob *= self.count_context_sensitive[item]
+        min_prob_years = min(self.count_years.values())
+        for item in found_years:
+            cur_prob *= self.count_years.get(item, min_prob_years)
 
-            for item in found_alpha_strings:
-                cur_prob *= self.count_alpha[len(item)][item]
+        min_prob_context_sensitive = min(self.count_context_sensitive)
+        for item in found_context_sensitive_strings:
+            cur_prob *= self.count_context_sensitive.get(item, min_prob_context_sensitive)
 
-            for item in found_mask_list:
-                cur_prob *= self.count_alpha_masks[len(item)][item]
+        for item in found_alpha_strings:
+            cur_prob *= get_probability(item, self.count_alpha)
 
-            for item in found_digit_strings:
-                cur_prob *= self.count_digits[len(item)][item]
+        for item in found_mask_list:
+            cur_prob *= get_probability(item, self.count_alpha_masks)
 
-            for item in found_other_strings:
-                cur_prob *= self.count_other[len(item)][item]
+        for item in found_digit_strings:
+            cur_prob *= get_probability(item, self.count_digits)
 
-            cur_prob *= self.count_base_structures[base_structure]
+        for item in found_other_strings:
+            cur_prob *= get_probability(item, self.count_other)
 
-        except KeyError:
-            cur_prob = 0
+        cur_prob *= self.count_base_structures[base_structure]
 
         # Classify it as a password if the probablility is higher than the
         # PCFG cut-off limit OR the OMEN score is equal to or below the OMEN
@@ -246,3 +239,15 @@ class PCFGPasswordScorer:
             category = 'p'
 
         return (password, category, cur_prob, omen_score)
+
+
+def get_probability(item, counts):
+    if len_dict := counts.get(len(item)):
+        if prob := len_dict.get(item):
+            return prob
+        else:
+            # if there are entries of the same length, return the minimum value of that group
+            return min(len_dict.values())
+    else:
+        # if no entries for of the same length exist, return the minim value of the entire dict
+        return min(min(len_dict.values()) for len_dict in counts.values())
