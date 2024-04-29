@@ -204,7 +204,9 @@ class PCFGPasswordScorer:
         # Start out at 100% probability
         cur_prob = 1.0
 
-        # I
+        # Underneath is an implementation of the password scorer where
+        # if a segment has not been trained on, it will get the lowest
+        # probability of that category instead of 0.
 
         for item in found_walks:
             cur_prob *= get_probability(item, self.count_keyboard)
