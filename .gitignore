@@ -27,3 +27,8 @@ docs/build/latex/*
 *.sav
 *.omn
 *.bak
+
+dist/
+build/
+
+*.egg-info
