@@ -231,7 +231,8 @@ class PCFGPasswordScorer:
         for item in found_other_strings:
             cur_prob *= get_probability(item, self.count_other)
 
-        cur_prob *= self.count_base_structures[base_structure]
+        min_prob_base_structures = min(self.count_base_structures)
+        cur_prob *= self.count_base_structures.get(base_structure, min_prob_base_structures)
 
         # Classify it as a password if the probablility is higher than the
         # PCFG cut-off limit OR the OMEN score is equal to or below the OMEN
