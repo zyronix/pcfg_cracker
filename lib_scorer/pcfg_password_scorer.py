@@ -215,7 +215,7 @@ class PCFGPasswordScorer:
         for item in found_years:
             cur_prob *= self.count_years.get(item, min_prob_years)
 
-        min_prob_context_sensitive = min(self.count_context_sensitive)
+        min_prob_context_sensitive = min(self.count_context_sensitive.values())
         for item in found_context_sensitive_strings:
             cur_prob *= self.count_context_sensitive.get(item, min_prob_context_sensitive)
 
@@ -231,7 +231,7 @@ class PCFGPasswordScorer:
         for item in found_other_strings:
             cur_prob *= get_probability(item, self.count_other)
 
-        min_prob_base_structures = min(self.count_base_structures)
+        min_prob_base_structures = min(self.count_base_structures.values())
         cur_prob *= self.count_base_structures.get(base_structure, min_prob_base_structures)
 
         # Classify it as a password if the probablility is higher than the
